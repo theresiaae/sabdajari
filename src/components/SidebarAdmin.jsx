@@ -1,26 +1,34 @@
 // src/components/SidebarAdmin.jsx
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 export default function SidebarAdmin() {
   const [userName, setUserName] = useState("Admin");
+  const [userEmail, setUserEmail] = useState(""); // 🔥 TAMBAHKAN INI!
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const name = localStorage.getItem("userName") || "Admin";
-    setUserName(name);
-  }, []);
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    
+    if (!token || user.role !== "admin") {
+      navigate("/");
+      return;
+    }
+    
+    setUserName(user.name || "Admin");
+    setUserEmail(user.email || ""); // 🔥 SIMPAN EMAIL!
+  }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("role");
-    window.location.href = "/login";
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
   };
 
-  // Menu admin hanya 2
   const menu = [
+    { icon: "📊", label: "Dashboard", path: "/admin" },
     { icon: "📚", label: "Kelola Kamus", path: "/admin/kamus" },
     { icon: "📰", label: "Kelola Artikel", path: "/admin/artikel" },
   ];
@@ -33,7 +41,14 @@ export default function SidebarAdmin() {
           <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">👤</div>
           <div className="flex-1">
             <div className="font-medium">{userName}</div>
-            <div className="text-xs text-blue-200">Admin Panel</div>
+            {/* 🔥 TAMPILKAN EMAIL JIKA ADA */}
+            {userEmail && (
+              <div className="text-xs text-blue-200 truncate">{userEmail}</div>
+            )}
+            {/* 🔥 JIKA TIDAK ADA EMAIL, TAMPILKAN "Admin Panel" */}
+            {!userEmail && (
+              <div className="text-xs text-blue-200">Admin Panel</div>
+            )}
           </div>
         </div>
       </div>
