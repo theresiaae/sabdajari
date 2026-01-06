@@ -1,25 +1,43 @@
 // src/pages/Register.jsx
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import sabdajari from '../assets/Sabdajari.png';
+import sabdajari from '../assets/sabdajari.png'; // pastikan huruf kecil!
 
 export default function Register() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (localStorage.getItem('isLoggedIn') === 'true') {
-      navigate('/');
-    }
-  }, [navigate]);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userName', name);
-    localStorage.setItem('userEmail', email);
-    navigate('/');
+    setLoading(true);
+    setError('');
+
+    try {
+      // 🔥 Kirim ke backend
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Registrasi gagal');
+
+      // 🔥 SETELAH DAFTAR → LANGSUNG KE HALAMAN LOGIN!
+      navigate('/login', { 
+        state: { 
+          message: 'Registrasi berhasil! Silakan login dengan akun Anda.' 
+        } 
+      });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -43,6 +61,12 @@ export default function Register() {
             Buat Akun Baru
           </h1>
 
+          {error && (
+            <div className="mb-6 p-3 bg-red-100 text-red-700 rounded-lg text-center">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-base font-medium text-gray-700 mb-3">
@@ -55,6 +79,7 @@ export default function Register() {
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-5 py-3 bg-gray-100 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 text-base"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -69,6 +94,7 @@ export default function Register() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-5 py-3 bg-gray-100 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 text-base"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -79,16 +105,20 @@ export default function Register() {
               <input
                 type="password"
                 placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-5 py-3 bg-gray-100 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 text-base"
                 required
+                disabled={loading}
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold text-lg hover:bg-blue-700 transition-colors mt-8"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold text-lg hover:bg-blue-700 transition-colors mt-8 disabled:opacity-50"
             >
-              Daftar
+              {loading ? 'Mendaftar...' : 'Daftar'}
             </button>
 
             <p className="text-center text-base text-gray-600 mt-8">
