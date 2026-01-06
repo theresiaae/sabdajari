@@ -1,7 +1,7 @@
 // src/components/DropZone.jsx
 import { useDrop } from 'react-dnd';
 
-export default function DropZone({ index, letter, droppedLetter, correctAnswer, onDrop, showFeedback }) {
+export default function DropZone({ index, letter, droppedLetter, correctAnswer, onDrop, showFeedback, image_path }) {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'LETTER',
     drop: (item) => {
@@ -24,8 +24,16 @@ export default function DropZone({ index, letter, droppedLetter, correctAnswer, 
           'border-gray-300 hover:border-gray-400'
       }`}
     >
-      <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-2">
-        <span className="text-2xl">{letter}</span>
+      {/* Gambar Gesture */}
+      <div className="w-20 h-20 mb-2">
+        <img
+          src={`http://localhost:5000${image_path}`}
+          alt={`Gerakan tangan huruf ${letter}`}
+          className="w-full h-full object-cover rounded-full"
+          onError={(e) => {
+            e.target.src = '/placeholder-hand.png'; // gambar placeholder
+          }}
+        />
       </div>
       <div className="text-xs text-gray-500 text-center mt-2">
         {droppedLetter ? `Seret huruf ${droppedLetter}` : 'Seret huruf ke sini'}

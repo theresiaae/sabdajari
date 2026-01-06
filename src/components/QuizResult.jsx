@@ -1,11 +1,9 @@
+// src/components/QuizResult.jsx
 import { Link } from 'react-router-dom';
 
 export default function QuizResult({ score, correctCount, wrongCount, onClose }) {
   const handleRestartQuiz = () => {
-    // Panggil onClose untuk memberi tahu parent (Kuis.jsx) untuk reset state
-    if (onClose) {
-      onClose(); // 👈 Ini yang akan reset state di Kuis.jsx
-    }
+    if (onClose) onClose();
   };
 
   return (
@@ -13,9 +11,9 @@ export default function QuizResult({ score, correctCount, wrongCount, onClose })
       <div className="bg-white rounded-2xl p-8 max-w-lg shadow-2xl">
         <div className="text-center">
           <div className="text-6xl mb-4">🏆</div>
-          <h1 className="text-3xl font-bold mb-2">Quiz Selesai!</h1>
-          <p className="text-gray-600 mb-6">
-            Anda telah menyelesaikan quiz bahasa isyarat Indonesia.
+          <h1 className="text-3xl font-bold mb-2">Kuis Selesai!</h1>
+          <p className="text-gray-600 mb-4">
+            Kamu menjawab benar <span className="font-bold text-green-600">{correctCount}</span> dari 26 huruf A–Z.
           </p>
 
           <div className="grid grid-cols-3 gap-4 mb-6">

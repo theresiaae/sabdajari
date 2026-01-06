@@ -8,10 +8,16 @@ export default function QuizSession({ session, sessionId, onSessionComplete, ses
   const [showFeedback, setShowFeedback] = useState(false);
   const [sessionScore, setSessionScore] = useState(0);
   const [correctLetters, setCorrectLetters] = useState([]);
-  const [correctList, setCorrectList] = useState([]); // ← tambahkan ini
+  const [correctList, setCorrectList] = useState([]);
   const [showSessionResult, setShowSessionResult] = useState(false);
+  const [sessionLetters, setSessionLetters] = useState([]);
+  const [shuffledIndices, setShuffledIndices] = useState([]); // ← tambahkan ini
 
   const shuffledLetters = [...session.letters].sort(() => Math.random() - 0.5);
+
+
+//Untuk mencegah pengguna menghafal posisi jawaban, sistem melakukan
+//  pengacakan urutan huruf dan drop zone pada setiap sesi kuis.
 
   useEffect(() => {
     setDroppedLetters({});
@@ -20,14 +26,52 @@ export default function QuizSession({ session, sessionId, onSessionComplete, ses
     setCorrectLetters([]);
     setCorrectList([]);
     setShowSessionResult(false);
+    setSessionLetters([]);
+    setShuffledIndices([]);
+
+    const fetchSessionData = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/letters');
+        const allLetters = await response.json();
+
+        const currentSessionLetters = session.letters.map(letter => 
+          allLetters.find(l => l.letter === letter)
+        );
+
+        setSessionLetters(currentSessionLetters);
+
+        // Acak index untuk drop zone
+        const indices = Array.from({ length: session.letters.length }, (_, i) => i);
+        const shuffled = [...indices].sort(() => Math.random() - 0.5);
+        setShuffledIndices(shuffled);
+
+      } catch (err) {
+        console.error('Gagal muat data huruf:', err);
+        setSessionLetters(session.letters.map(letter => ({
+          letter,
+          image_path: '/placeholder.jpg'
+        })));
+        setShuffledIndices(Array.from({ length: session.letters.length }, (_, i) => i));
+      }
+    };
+
+    fetchSessionData();
   }, [session]);
 
+
+//Proses Drag and Drop Jawaban
+//Ketika pengguna menyeret huruf ke drop zone, 
+// sistem akan menyimpan huruf tersebut berdasarkan indeks soal.
   const handleDrop = (letter, index) => {
     if (!droppedLetters[index]) {
       setDroppedLetters(prev => ({ ...prev, [index]: letter }));
     }
   };
 
+
+//Validasi Jawaban dan Perhitungan Skor
+//Setelah semua drop zone terisi, pengguna dapat menekan
+//tombol Cek Jawaban, dan sistem akan memvalidasi jawaban.
   const checkAnswers = () => {
     let correct = 0;
     const list = [];
@@ -42,13 +86,13 @@ export default function QuizSession({ session, sessionId, onSessionComplete, ses
 
     setSessionScore(correct * 10);
     setCorrectLetters(list);
-    setCorrectList(list); // ← simpan ke state
+    setCorrectList(list);
     setShowFeedback(true);
     setShowSessionResult(true);
   };
 
   const nextSession = () => {
-    onSessionComplete(sessionId, sessionScore, correctList); // ← pakai dari state
+    onSessionComplete(sessionId, sessionScore, correctList);
     setShowSessionResult(false);
   };
 
@@ -75,17 +119,21 @@ export default function QuizSession({ session, sessionId, onSessionComplete, ses
 
       {/* Drop Zones */}
       <div className="w-[1000px] px-6 grid grid-cols-5 gap-4 mb-6">
-        {session.letters.map((letter, index) => (
-          <DropZone
-            key={index}
-            index={index}
-            letter={letter}
-            correctAnswer={letter}
-            droppedLetter={droppedLetters[index]}
-            onDrop={handleDrop}
-            showFeedback={showFeedback}
-          />
-        ))}
+        {shuffledIndices.map((originalIndex, displayIndex) => {
+          const letter = session.letters[originalIndex];
+          return (
+            <DropZone
+              key={originalIndex}
+              index={originalIndex}
+              letter={letter}
+              correctAnswer={letter}
+              droppedLetter={droppedLetters[originalIndex]}
+              onDrop={handleDrop}
+              showFeedback={showFeedback}
+              image_path={sessionLetters[originalIndex]?.image_path || '/placeholder.jpg'}
+            />
+          );
+        })}
       </div>
 
       {/* Draggable Letters */}
@@ -138,7 +186,9 @@ export default function QuizSession({ session, sessionId, onSessionComplete, ses
         </div>
       )}
 
-      {/* Popup Hasil Sesi */}
+      {/* Menampilkan Hasil Sesi Kuis Setelah satu sesi selesai, 
+      sistem menampilkan hasil dalam bentuk popup yang berisi jumlah 
+      jawaban benar dan navigasi ke sesi berikutnya. */}
       {showSessionResult && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 max-w-md text-center">
