@@ -3,64 +3,41 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import SidebarAdmin from '../components/SidebarAdmin';
 
-// Dummy data — NAMA FIELD SUDAH DIPERBAIKI
-const articles = [
-  { 
-    id: 1, 
-    title: 'Pengenalan Bahasa Isyarat Indonesia', 
-    slug: 'pengenalan-bahasa-isyarat-indonesia', 
-    cover_image: '/cover1.jpg', 
-    content: 'Bahasa Isyarat Indonesia (BISINDO) adalah bahasa isyarat yang digunakan oleh komunitas Tuli di Indonesia. BISINDO memiliki struktur dan tata bahasa yang unik dan berbeda dari bahasa isyarat negara lain.' 
-  },
-  { 
-    id: 2, 
-    title: 'Sejarah Bahasa Isyarat di Indonesia', 
-    slug: 'sejarah-bahasa-isyarat-di-indonesia', 
-    cover_image: '/cover2.jpg', 
-    content: 'Sejarah Bahasa Isyarat di Indonesia dimulai sejak zaman kolonial Belanda, ketika para guru asing memperkenalkan sistem isyarat pertama kali di sekolah-sekolah untuk anak-anak Tuli.' 
-  },
-];
-
 export default function EditArtikel() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
-    cover_image: '',
     content: '',
   });
-
-  const articleData = articles.find(a => a.slug === slug);
+  const [currentCover, setCurrentCover] = useState('');
+  const [newCover, setNewCover] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (articleData) {
-      setFormData({
-        title: articleData.title,
-        cover_image: articleData.cover_image,
-        content: articleData.content,
-      });
-    }
-  }, [articleData]);
-
-  if (!articleData) {
-    return (
-      <div className="flex h-screen bg-white">
-        <SidebarAdmin />
-        <main className="flex-1 overflow-y-auto p-6 bg-white flex justify-center">
-          <div className="w-[1000px] text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-2">Artikel Tidak Ditemukan</h1>
-            <p className="text-gray-600">
-              Silakan kembali ke{' '}
-              <Link to="/admin/artikel" className="text-blue-600">
-                halaman kelola artikel
-              </Link>
-              .
-            </p>
-          </div>
-        </main>
-      </div>
-    );
-  }
+    const fetchArticle = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/articles/${slug}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (!response.ok) throw new Error('Artikel tidak ditemukan');
+        const data = await response.json();
+        setFormData({
+          title: data.title,
+          content: data.content,
+        });
+        setCurrentCover(data.cover_image);
+        setLoading(false);
+      } catch (err) {
+        alert(err.message);
+        navigate('/admin/artikel');
+      }
+    };
+    fetchArticle();
+  }, [slug, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -68,25 +45,70 @@ export default function EditArtikel() {
   };
 
   const handleFileChange = (e) => {
-    console.log('File dipilih:', e.target.files[0]);
+    setNewCover(e.target.files[0]);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(`Artikel "${formData.title}" disimpan!`);
+    setSubmitting(true);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('content', formData.content);
+      if (newCover) {
+        formDataToSend.append('cover', newCover);
+      }
+
+      const response = await fetch(`http://localhost:5000/api/articles/${slug}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formDataToSend
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Gagal menyimpan perubahan');
+      }
+      
+      alert('Artikel berhasil diperbarui!');
+      navigate('/admin/artikel');
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) return (
+    <div className="flex h-screen bg-white">
+      <SidebarAdmin />
+      <main className="flex-1 p-6 flex justify-center">
+        <div className="w-[1000px]">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/2 mb-6"></div>
+            <div className="h-48 bg-gray-200 rounded-xl mb-6"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 
   return (
     <div className="flex h-screen bg-white">
       <SidebarAdmin />
       <main className="flex-1 overflow-y-auto p-6 bg-white flex justify-center">
-        {/* CONTAINER FIXED WIDTH 1000px */}
         <div className="w-[1000px]">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Edit Artikel</h1>
           <p className="text-gray-600 mb-6">Edit artikel yang sudah ada</p>
 
           <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-md mb-6">
-            {/* Judul */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Judul Artikel
@@ -101,7 +123,6 @@ export default function EditArtikel() {
               />
             </div>
 
-            {/* Gambar Cover */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Gambar Cover
@@ -115,14 +136,14 @@ export default function EditArtikel() {
               />
               <div className="mt-2">
                 <img
-                  src={articleData.cover_image}
-                  alt={`Cover artikel ${articleData.title}`}
+                  src={`http://localhost:5000${currentCover}`}
+                  alt={`Cover artikel ${formData.title}`}
                   className="w-full h-40 object-cover rounded"
+                  onError={(e) => e.target.src = '/placeholder.png'}
                 />
               </div>
             </div>
 
-            {/* Isi Artikel */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Isi Artikel
@@ -140,9 +161,10 @@ export default function EditArtikel() {
             <div className="flex gap-3">
               <button
                 type="submit"
-                className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition"
+                disabled={submitting}
+                className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
               >
-                Simpan
+                {submitting ? 'Menyimpan...' : 'Simpan'}
               </button>
               <Link
                 to="/admin/artikel"
@@ -152,37 +174,6 @@ export default function EditArtikel() {
               </Link>
             </div>
           </form>
-
-          {/* Preview */}
-          <div className="bg-white rounded-xl shadow-md">
-            <div className="bg-gray-50 p-4 border-b border-gray-200">
-              <div className="grid grid-cols-3 gap-4 text-sm font-semibold text-gray-700">
-                <div>Judul</div>
-                <div>Gambar</div>
-                <div>Aksi</div>
-              </div>
-            </div>
-            <div className="p-4">
-              <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50">
-                <div className="text-sm text-gray-700">{articleData.title}</div>
-                <div>
-                  <img
-                    src={articleData.cover_image}
-                    alt=""
-                    className="w-16 h-16 object-cover rounded"
-                  />
-                </div>
-                <div>
-                  <Link
-                    to={`/admin/artikel/${articleData.slug}`}
-                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm"
-                  >
-                    🖊️ Edit
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </main>
     </div>

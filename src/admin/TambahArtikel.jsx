@@ -7,9 +7,10 @@ export default function TambahArtikel() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
-    cover_image: '',
     content: '',
   });
+  const [cover, setCover] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -17,28 +18,52 @@ export default function TambahArtikel() {
   };
 
   const handleFileChange = (e) => {
-    console.log('File dipilih:', e.target.files[0]);
+    setCover(e.target.files[0]);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    alert(`Artikel "${formData.title}" berhasil ditambahkan!`);
-    
-    navigate('/admin/artikel');
+    setSubmitting(true);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('content', formData.content);
+      if (cover) {
+        formDataToSend.append('cover', cover);
+      }
+
+      const response = await fetch('http://localhost:5000/api/articles/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formDataToSend
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Gagal menambahkan artikel');
+      }
+      
+      alert('Artikel berhasil ditambahkan!');
+      navigate('/admin/artikel');
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="flex h-screen bg-white">
       <SidebarAdmin />
       <main className="flex-1 overflow-y-auto p-6 bg-white flex justify-center">
-        {/* CONTAINER FIXED WIDTH 1000px */}
         <div className="w-[1000px]">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Tambah Artikel Baru</h1>
           <p className="text-gray-600 mb-6">Isi form di bawah untuk menambahkan artikel baru</p>
 
           <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-md mb-6">
-            {/* Judul */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Judul Artikel
@@ -53,7 +78,6 @@ export default function TambahArtikel() {
               />
             </div>
 
-            {/* Gambar Cover */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Gambar Cover
@@ -67,7 +91,6 @@ export default function TambahArtikel() {
               />
             </div>
 
-            {/* Isi Artikel */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Isi Artikel
@@ -85,9 +108,10 @@ export default function TambahArtikel() {
             <div className="flex gap-3">
               <button
                 type="submit"
-                className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition"
+                disabled={submitting}
+                className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
               >
-                Simpan
+                {submitting ? 'Menyimpan...' : 'Simpan'}
               </button>
               <Link
                 to="/admin/artikel"
