@@ -6,22 +6,28 @@ export default function Sidebar() {
   const [userName, setUserName] = useState("Sabda Jari");
   const [userEmail, setUserEmail] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const location = useLocation(); // ← hanya untuk styling aktif
+  const location = useLocation();
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-    setIsLoggedIn(loggedIn);
+    // 🔥 Cek apakah user sudah login (ada token)
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
     
-    if (loggedIn) {
-      setUserName(localStorage.getItem("userName") || "Urbae19");
-      setUserEmail(localStorage.getItem("userEmail") || "");
+    if (token && user) {
+      setIsLoggedIn(true);
+      setUserName(user.name || "Sabda Jari");
+      setUserEmail(user.email || "");
+    } else {
+      setIsLoggedIn(false);
+      setUserName("Sabda Jari");
+      setUserEmail("");
     }
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userEmail");
+    // 🔥 Hapus semua data login
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     window.location.href = "/";
   };
 
@@ -30,7 +36,7 @@ export default function Sidebar() {
     { icon: "📚", label: "Kamus", path: "/kamus" },
     { icon: "❓", label: "Kuis", path: "/kuis" },
     { icon: "📷", label: "Scan", path: "/scan" },
-    { icon: "📰", label: "Artikel", path: "/artikel" },
+    { icon: "📰", label: "Artikel", path: "/artikel" }, 
   ];
 
   return (
@@ -54,7 +60,7 @@ export default function Sidebar() {
               to={item.path}
               className={`flex items-center gap-3 px-6 py-3 transition ${
                 isActive
-                  ? "bg-blue-700 text-white" // highlight aktif
+                  ? "bg-blue-700 text-white"
                   : "hover:bg-blue-800 text-white"
               }`}
             >
@@ -67,7 +73,6 @@ export default function Sidebar() {
 
       {isLoggedIn && (
         <div className="p-3">
-          {/* Ubah tombol logout jadi biru (sesuai gambar) */}
           <button
             onClick={handleLogout}
             className="w-full bg-blue-700 text-white py-2 px-3 rounded-lg hover:bg-blue-800 transition text-sm"
