@@ -1,8 +1,20 @@
 // src/admin/Dashboard.jsx
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react'; 
+import { Link, useNavigate } from 'react-router-dom'; // ← TAMBAHKAN useNavigate!
 import SidebarAdmin from '../components/SidebarAdmin';
 
 export default function AdminDashboard() {
+  const navigate = useNavigate(); // ← TAMBAHKAN INI!
+
+  // 🔥 Cek apakah user adalah admin
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    
+    if (!token || user.role !== "admin") {
+      navigate("/");
+    }
+  }, [navigate]);
 
   const totalHuruf = 26;
   const totalArtikel = 3;
@@ -10,10 +22,7 @@ export default function AdminDashboard() {
   return (
     <div className="flex h-screen bg-white">
       <SidebarAdmin />
-
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-6 bg-white flex justify-center">
-
         <div className="w-[1000px]">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Dashboard</h1>
           <p className="text-gray-600 mb-6">Selamat datang di panel admin BISINDO</p>
