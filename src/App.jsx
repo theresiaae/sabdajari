@@ -1,6 +1,8 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Home from './pages/home';
+
+// Halaman Publik
+import Home from './pages/Home';
 import Kamus from './pages/Kamus';
 import KamusDetail from './pages/KamusDetail';
 import Scan from './pages/Scan';
@@ -10,7 +12,7 @@ import Kuis from './pages/Kuis';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
-// Import halaman admin
+// Halaman Admin
 import AdminDashboard from './admin/Dashboard';
 import AdminKamus from './admin/Kamus';
 import AdminArtikel from './admin/Artikel';
@@ -18,11 +20,14 @@ import EditKamus from './admin/EditKamus';
 import EditArtikel from './admin/EditArtikel';
 import TambahArtikel from './admin/TambahArtikel';
 
+// Admin Route Guard
+import { AdminRoute } from './admin/utils/AdminRoute';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* 🔓 HALAMAN PUBLIK (BISA DIKASES SEMUA ORANG) */}
         <Route path="/" element={<Home />} />
         <Route path="/kamus" element={<Kamus />} />
         <Route path="/kamus/:letter" element={<KamusDetail />} />
@@ -33,14 +38,55 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-                {/* Admin Pages — hanya bisa diakses jika login sebagai admin */}
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/kamus" element={<AdminKamus />} />
-        <Route path="/admin/kamus/:letter" element={<EditKamus />} />
-        <Route path="/admin/artikel" element={<AdminArtikel />} />
-        <Route path="/admin/artikel/:slug" element={<EditArtikel />} />
-        <Route path="/admin/artikel/tambah" element={<TambahArtikel />} />
-
+        {/* 🔒 HALAMAN ADMIN (HANYA UNTUK ADMIN) */}
+        <Route 
+          path="/admin" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/kamus" 
+          element={
+            <AdminRoute>
+              <AdminKamus />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/kamus/:letter" 
+          element={
+            <AdminRoute>
+              <EditKamus />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/artikel" 
+          element={
+            <AdminRoute>
+              <AdminArtikel />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/artikel/:slug" 
+          element={
+            <AdminRoute>
+              <EditArtikel />
+            </AdminRoute>
+          } 
+        />
+        <Route 
+          path="/admin/artikel/tambah" 
+          element={
+            <AdminRoute>
+              <TambahArtikel />
+            </AdminRoute>
+          } 
+        />
       </Routes>
     </BrowserRouter>
   );
