@@ -1,14 +1,22 @@
-// src/components/LetterCard.jsx
+// src/components/lettercard.jsx
 import { Link } from 'react-router-dom';
 
-export default function lettercard({ letterData }) {
+export default function LetterCard({ letterData }) {
   return (
-    <Link
-      to={`/kamus/${letterData.letter}`}
-      className="bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg p-4 text-center transition duration-200 flex flex-col items-center"
-    >
-      <div className="text-4xl font-bold mb-2">{letterData.letter}</div>
-      <div className="text-xs text-gray-600">Huruf {letterData.letter}</div>
+    <Link to={`/kamus/${letterData.letter}`} className="block">
+      <div className="bg-white border border-gray-200 rounded-xl p-4 text-center hover:shadow-lg transition-shadow">
+        <div className="text-3xl font-bold text-gray-800 mb-2">
+          {letterData.letter}
+        </div>
+        <img
+          src={`http://localhost:5000${letterData.image_path}`}
+          alt={`Huruf ${letterData.letter}`}
+          className="w-16 h-16 mx-auto object-contain"
+          onError={(e) => {
+            e.target.src = '/placeholder-hand.png'; // gambar placeholder
+          }}
+        />
+      </div>
     </Link>
   );
 }
